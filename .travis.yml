@@ -10,10 +10,10 @@ script: make build-ci
 
 deploy:
   provider: releases
-  api_key: "3f3e7c45d78145112f1fa2cfc61cd8d8996b5cbd"
+  api_key:
+    secure: HU29H6kczDOCjtP2hyqrQXi0GWRrJTPDY2FGgzuI25AwmhZf1POBbo/KhK8lzwpiyF0gEVZUSPkRz3HUaPTQephvH+eet9Awnw6ZDG1ZeLbeGtvOE8ixrVIvhq6gShwzM9XtKFRfQn6ZmUIF3yMell493/t1px4BO2BAWeCEPJgKvnHxDY2S5g0KZHECCX6azinNgwG561KqCmbJo0MjmhH2t/MOlwfjJYUHvKs79cKjV9eDwXyc65qG1vJj3oAyo681XIgOCGQinMwXEhdBD2l5GPsh1LD3ulmm4arye3r8Zg4sbordZgo21G1pTYuKA79AqjR8oTVcz9XjHJbXK71WhnJ3xxi8ydsNrEnn8/cY4VzTNhAdicZLqsO8ouPL0ym/NWSY4Nn4KHflqs87+FxwcsJhA5pH0e3Olj+zzxfyC5X4ZQMY6DpI5x3Qgi+qwwJbMfiLkaF/21uSaW2Sfb2bpCsk97RwxhSEz6BBUB+L7hPdBXpRpfzqBhRABYNO+Ui3q5CPJraIhOHFtVIwTyzEpIsQKHrep0JtXEJQ/3z8lQ0EZvLqD4O5uSm3CdnHnIyetxm2SlNk70juWjKolFdwHcjLWa/NEMzNVWJGNNethe3dXZNmmp98OqcAQ7wPritlTJ+hPO5+fnTDCrVC/GYFFczxMd+D1gKt+XiL/dY=
   file:
-    - ./dist/kube-deploy-linux
-    - ./dist/kube-deploy-mac
-  skip_cleanup: true
+    - "./dist/kube-deploy-linux"
+    - "./dist/kube-deploy-mac"
   on:
-    tags: true
+    repo: flix-tech/kube-deployer
