@@ -17,3 +17,4 @@ deploy:
     - "./dist/kube-deploy-mac"
   on:
     repo: flix-tech/kube-deployer
+    tag: true
