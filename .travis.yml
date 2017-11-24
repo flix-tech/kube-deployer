@@ -17,4 +17,4 @@ deploy:
     - "./dist/kube-deploy-linux"
     - "./dist/kube-deploy-mac"
   on:
-    tag: true
+    tags: true
