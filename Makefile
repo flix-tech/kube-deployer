@@ -1,6 +1,6 @@
 
 install:
-	go get ./...
+	glide install
 
 test:
 	go test
