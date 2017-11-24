@@ -1,0 +1,47 @@
+language: go
+
+rvm:
+  - 1.9.1
+
+stages:
+  - install
+  - test
+  - build
+
+glide-install:
+  stage: install
+  before_script:
+    - export PROJECT_DIR=$GOPATH/src/github.com/flix-tech/kube-deployer
+    - mkdir -p $PROJECT_DIR
+    - mv $CI_PROJECT_DIR/* $PROJECT_DIR
+    - cd $PROJECT_DIR
+  script:
+    - curl https://glide.sh/get | sh
+    - glide --debug install
+    - cp -r vendor $CI_PROJECT_DIR/
+
+test:
+  stage: test
+  before_script:
+    - export PROJECT_DIR=$GOPATH/src/github.com/flix-tech/kube-deployer
+    - mkdir -p $PROJECT_DIR
+    - mv $CI_PROJECT_DIR/* $PROJECT_DIR
+    - cd $PROJECT_DIR
+  script:
+    - go test
+
+build:
+  stage: build
+  before_script:
+    - export PROJECT_DIR=$GOPATH/src/github.com/flix-tech/kube-deployer
+    - mkdir -p $PROJECT_DIR
+    - mv $CI_PROJECT_DIR/* $PROJECT_DIR
+    - cd $PROJECT_DIR
+  script:
+    - apt update -qq
+    - apt install -y upx-ucl
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X main.__VERSION__=$TRAVIS_TAG -s -w -extldflags '-static'" -o $TRAVIS_BUILD_DIR/kube-deploy-linux
+    - GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.__VERSION__=$TRAVIS_TAG" -o $TRAVIS_BUILD_DIR/kube-deploy-mac
+    - upx --brute $TRAVIS_BUILD_DIR/kube-deploy-linux
+  on:
+    tags: true

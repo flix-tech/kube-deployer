@@ -1,0 +1,15 @@
+package: github.com/flix-tech/kube-deployer
+import:
+- package: github.com/urfave/cli
+  version: ^1.20.0
+- package: gopkg.in/yaml.v2
+- package: github.com/aymerick/raymond
+  version: ^2.0.1
+- package: github.com/fatih/color
+  version: ^1.5.0
+- package: github.com/gosimple/slug
+  version: ^1.1.1
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
