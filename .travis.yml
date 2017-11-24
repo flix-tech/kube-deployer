@@ -7,3 +7,13 @@ before_script:
   - curl https://glide.sh/get | sh
 
 script: make build-ci
+
+deploy:
+  provider: releases
+  api_key: "3f3e7c45d78145112f1fa2cfc61cd8d8996b5cbd"
+  file:
+    - ./dist/kube-deploy-linux
+    - ./dist/kube-deploy-mac
+  skip_cleanup: true
+  on:
+    tags: true
