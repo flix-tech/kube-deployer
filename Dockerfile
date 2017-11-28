@@ -4,7 +4,7 @@ ARG DOCKER_TAG=dev
 
 RUN curl -qL https://github.com/Masterminds/glide/releases/download/v0.13.1/glide-v0.13.1-linux-amd64.tar.gz | tar xz
 
-ADD docker /go/src/github.com/flix-tech/kube-deployer
+ADD . /go/src/github.com/flix-tech/kube-deployer
 
 WORKDIR /go/src/github.com/flix-tech/kube-deployer
 
