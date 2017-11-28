@@ -199,7 +199,7 @@ Here is an example of how to multi-branch-deploy from gitlab-ci.
 ```
 # deploy on branch pushes
 deploy-staging-branch:
-  image: kube-deployer:latest
+  image: flixtech/kube-deployer:latest
   script: >
     kube-deploy
     deploy
@@ -216,7 +216,7 @@ deploy-staging-branch:
 
 # deploy latest master to static-1 and static-2 staging env
 deploy-sandbox-branch:
-  image: kube-deployer:latest
+  image: flixtech/kube-deployer:latest
   script:
 	- kube-deploy deploy \
 	    -branch=master \
