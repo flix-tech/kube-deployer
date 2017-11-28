@@ -1,4 +1,6 @@
-FROM golang:1.9
+FROM golang:1
+
+ARG DOCKER_TAG=dev
 
 RUN curl -qL https://github.com/Masterminds/glide/releases/download/v0.13.1/glide-v0.13.1-linux-amd64.tar.gz | tar xz
 
