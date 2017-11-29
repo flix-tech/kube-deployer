@@ -14,6 +14,8 @@ Go see all available commands please run:
 $: kube-deploy -h
 ```
 
+A Docker image with kubectl 1.7.7 is available here: https://hub.docker.com/r/flixtech/kube-deployer/
+
 ## Templating
 
 Internally kube-deployer uses the handlebars v3 templating engine.
