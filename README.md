@@ -1,3 +1,6 @@
+![](https://travis-ci.org/flix-tech/kube-deployer.svg?branch=master)
+
+
 Kube Deployer adds templating and multi-branch environments to your K8S deployments, 
 reduces your project overhead and takes care of cleaning up merged branches.
 
