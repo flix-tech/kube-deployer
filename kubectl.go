@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"os/exec"
 	"bufio"
+	"bytes"
+	"errors"
+	"fmt"
 	"github.com/fatih/color"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
-	"bytes"
-	"errors"
 )
 
 func (client *KubeClient) GetDeployedBranchHashes(namespace string) ([]string, error) {
@@ -45,7 +45,7 @@ func (client *KubeClient) GetDeployedBranchHashes(namespace string) ([]string, e
 	return branches, nil
 }
 
-func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace string) (string, error) {
+func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace string, labelList map[string]string, dryRun bool) (string, error) {
 	cmdName := "kubectl"
 	cmdArgs := []string{
 		"delete",
@@ -56,8 +56,15 @@ func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace str
 		fmt.Sprintf("--token=%s", client.Token),
 		fmt.Sprintf("--server=%s", client.Server),
 	}
-	cmd := exec.Command(cmdName, cmdArgs...)
 
+	for labelName, labelValue := range labelList {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("-l %s=%s", labelName, labelValue))
+	}
+	if dryRun {
+		cmdArgs = append(cmdArgs, "--dry-run")
+	}
+
+	cmd := exec.Command(cmdName, cmdArgs...)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
