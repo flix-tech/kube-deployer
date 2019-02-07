@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"gopkg.in/urfave/cli.v1"
-	"log"
 	"gopkg.in/yaml.v2"
+	"log"
+	"os"
+	"strings"
 )
 
 //TODO:: make kubectl path configurable via env|parameter
@@ -22,6 +23,7 @@ const PROJECT_DIR_FLAG = "project-dir"
 const TAG_FLAG = "tag"
 const CLUSTER_FLAG = "cluster"
 const NAMESPACE_FLAG = "namespace"
+const LABEL_FLAG = "label"
 const ENV_FLAG = "env"
 const BRANCH_FLAG = "branch"
 const TEMPLATE_FLAG = "template"
@@ -46,6 +48,10 @@ var clusterFlag = cli.StringFlag{
 var namespaceFlag = cli.StringFlag{
 	Name:  NAMESPACE_FLAG,
 	Usage: "Kubernetes namespace.",
+}
+var labelFlag = cli.StringSliceFlag{
+	Name:  LABEL_FLAG,
+	Usage: "Label pair name=value to identify an element.",
 }
 var envFlag = cli.StringFlag{
 	Name:  ENV_FLAG,
@@ -169,13 +175,16 @@ func main() {
 				projectDirFlag,
 				clusterFlag,
 				namespaceFlag,
+				labelFlag,
 				serverFlag,
 				tokenFlag,
+				dryRunFlag,
 			},
 			Action: func(c *cli.Context) error {
 				projectDir := c.String(PROJECT_DIR_FLAG)
 				cluster := c.String(CLUSTER_FLAG)
 				token := c.String(TOKEN_FLAG)
+				dryRun := c.Bool(DRY_RUN_FLAG)
 
 				if projectDir == "" {
 					projectDir = "."
@@ -183,6 +192,21 @@ func main() {
 
 				var server = c.String(SERVER_FLAG)
 				var namespace = c.String(NAMESPACE_FLAG)
+				var labels = c.StringSlice(LABEL_FLAG)
+				var labelList = make(map[string]string)
+
+				for _, labelText := range labels {
+					if len(labelText) == 0 {
+						fmt.Println("Empty label flag detected.")
+						os.Exit(1)
+					}
+					labelParts := strings.Split(labelText, "=")
+					if len(labelParts) < 2 || (len(labelParts[0]) == 0 || len(labelParts[1]) == 0) {
+						fmt.Println("Invalid label flag detected.")
+						os.Exit(1)
+					}
+					labelList[labelParts[0]] = labelParts[1]
+				}
 
 				if cluster == "" && server == "" {
 					fmt.Println("Please specify either the cluster or server flag.")
@@ -211,7 +235,7 @@ func main() {
 					log.Fatal("Please provide a Kubernetes access token.")
 				}
 
-				clean(projectDir, server, clusterApiToken, namespace)
+				clean(projectDir, server, clusterApiToken, namespace, labelList, dryRun)
 
 				return nil
 			},
@@ -221,7 +245,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-func clean(projectDir string, host string, token string, namespace string) {
+func clean(projectDir string, host string, token string, namespace string, labelList map[string]string, dryRun bool) {
 	kubectl := KubeClient{
 		Token:   token,
 		Server:  host,
@@ -244,7 +268,7 @@ func clean(projectDir string, host string, token string, namespace string) {
 	}
 
 	for _, branchHashToDelete := range branchesHashesToDelete {
-		output, err := kubectl.DeleteObjectsByBranch(branchHashToDelete, namespace)
+		output, err := kubectl.DeleteObjectsByBranch(branchHashToDelete, namespace, labelList, dryRun)
 
 		if err != nil {
 			log.Fatal(err)
