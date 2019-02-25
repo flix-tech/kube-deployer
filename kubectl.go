@@ -56,7 +56,7 @@ func (client *KubeClient) GetDeployedBranchHashes(namespace string) ([]string, e
 	return branches, nil
 }
 
-func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace string) (string, error) {
+func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace string, labelList map[string]string, dryRun bool) (string, error) {
 	usingContext := false
 
 	if client.Context != "" {
@@ -76,6 +76,14 @@ func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace str
 	if !usingContext {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("--server=%s", client.Server))
 		cmdArgs = append(cmdArgs, fmt.Sprintf("--token=%s", client.Token))
+	}
+
+	for labelName, labelValue := range labelList {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("-l %s=%s", labelName, labelValue))
+	}
+
+	if dryRun {
+		cmdArgs = append(cmdArgs, "--dry-run")
 	}
 
 	cmd := exec.Command(cmdName, cmdArgs...)
