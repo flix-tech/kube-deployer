@@ -1,19 +1,19 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"errors"
 	"fmt"
-	"strings"
-	"os"
 	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"os"
+	"strings"
 )
 
 const DEFAULT_DEPLOYER_YAML = ".kube-deploy.yml"
 const DEPLOYER_SPEC_MIN_VERSION = 1
 
-func (spec *DeployerSpec) FromCliContext(c *cli.Context) (error) {
+func (spec *DeployerSpec) FromCliContext(c *cli.Context) error {
 	tag := c.String(TAG_FLAG)
 	namespace := c.String(NAMESPACE_FLAG)
 	env := c.String(ENV_FLAG)
@@ -232,8 +232,9 @@ type DeployerSpec struct {
 }
 
 type DeployerSpecCluster struct {
-	Host  string
-	Token string
+	Host    string
+	Token   string
+	Context string
 }
 
 type DeployerSpecContainer struct {
@@ -243,7 +244,7 @@ type DeployerSpecContainer struct {
 
 type DeployerConfigFile struct {
 	SpecVersion int `yaml:"version"`
-	Containers []struct {
+	Containers  []struct {
 		Id    string `yaml:"id"`
 		Image string `yaml:"image"`
 	} `yaml:"containers"`

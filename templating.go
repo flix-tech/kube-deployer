@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"strings"
 	"github.com/aymerick/raymond"
+	"strings"
 )
 
 func (renderContext *RenderContext) Build(deployerSpec DeployerSpec, objects []map[string]interface{}) error {

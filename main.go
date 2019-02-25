@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"gopkg.in/urfave/cli.v1"
-	"log"
 	"gopkg.in/yaml.v2"
+	"log"
+	"os"
 )
-
-//TODO:: make kubectl path configurable via env|parameter
 
 var __VERSION__ string
 
@@ -30,6 +28,7 @@ const SERVER_FLAG = "server"
 const DRY_RUN_FLAG = "dry-run"
 const VERBOSE_FLAG = "verbose"
 const TOKEN_FLAG = "token"
+const CONTEXT_FLAG = "context"
 
 var projectDirFlag = cli.StringFlag{
 	Name:  PROJECT_DIR_FLAG,
@@ -79,6 +78,10 @@ var tokenFlag = cli.StringFlag{
 	Name:  TOKEN_FLAG,
 	Usage: "Kube token. Alternative it will try to read KUBE_TOKEN env variable.",
 }
+var contextFlag = cli.StringFlag{
+	Name:  CONTEXT_FLAG,
+	Usage: "Kube context. Will switch to this context before runnig any kubectl command",
+}
 
 func main() {
 	app := cli.NewApp()
@@ -101,11 +104,13 @@ func main() {
 				dryRunFlag,
 				verboseFlag,
 				tokenFlag,
+				contextFlag,
 			},
 			Action: func(c *cli.Context) error {
 				dryRun := c.Bool(DRY_RUN_FLAG)
 				verbose := c.Bool(VERBOSE_FLAG)
 				token := c.String(TOKEN_FLAG)
+				context := c.String(CONTEXT_FLAG)
 
 				var clusterApiToken string
 				if token == "" {
@@ -114,8 +119,8 @@ func main() {
 					clusterApiToken = token
 				}
 
-				if clusterApiToken == "" {
-					log.Fatal("Please provide a Kubernetes access token.")
+				if clusterApiToken == "" && context == "" {
+					log.Fatal("Please provide a Kubernetes access token or context.")
 				}
 
 				var deployerSpec DeployerSpec
@@ -125,6 +130,7 @@ func main() {
 					log.Fatalf("error: %v", err)
 				}
 				deployerSpec.Cluster.Token = clusterApiToken
+				deployerSpec.Cluster.Context = context
 
 				deploy(deployerSpec, dryRun, verbose)
 
@@ -171,11 +177,13 @@ func main() {
 				namespaceFlag,
 				serverFlag,
 				tokenFlag,
+				contextFlag,
 			},
 			Action: func(c *cli.Context) error {
 				projectDir := c.String(PROJECT_DIR_FLAG)
 				cluster := c.String(CLUSTER_FLAG)
 				token := c.String(TOKEN_FLAG)
+				context := c.String(CONTEXT_FLAG)
 
 				if projectDir == "" {
 					projectDir = "."
@@ -207,11 +215,11 @@ func main() {
 					clusterApiToken = token
 				}
 
-				if clusterApiToken == "" {
-					log.Fatal("Please provide a Kubernetes access token.")
+				if clusterApiToken == "" && context == "" {
+					log.Fatal("Please provide a Kubernetes access token or context.")
 				}
 
-				clean(projectDir, server, clusterApiToken, namespace)
+				clean(projectDir, server, clusterApiToken, namespace, context)
 
 				return nil
 			},
@@ -221,11 +229,12 @@ func main() {
 	app.Run(os.Args)
 }
 
-func clean(projectDir string, host string, token string, namespace string) {
+func clean(projectDir string, host string, token string, namespace string, context string) {
 	kubectl := KubeClient{
 		Token:   token,
 		Server:  host,
 		Verbose: false,
+		Context: context,
 	}
 
 	deployedBranchHashes, err := kubectl.GetDeployedBranchHashes(namespace)
@@ -264,12 +273,12 @@ func deploy(deployerSpec DeployerSpec, dryRun bool, verbose bool) {
 	var kubeCtl = KubeClient{
 		Token:   deployerSpec.Cluster.Token,
 		Server:  deployerSpec.Cluster.Host,
+		Context: deployerSpec.Cluster.Context,
 		Verbose: verbose,
 	}
 
 	kubeCtl.Version()
 
-	removeAlphaCronJob(kubeCtl, kubernetesDefinition)
 	kubeCtl.Apply(kubernetesDefinition, deployerSpec.Namespace, dryRun)
 }
 
@@ -309,37 +318,6 @@ func render(deployerSpec DeployerSpec) (string, error) {
 	}
 
 	return renderContext.Render(templates)
-}
-
-// TODO: Check if we need to do this also in beta
-func removeAlphaCronJob(kubectl KubeClient, kubernetesDefinition string) {
-	objects, err := UnmarshalYaml(kubernetesDefinition)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, object := range objects {
-		kind := object["kind"].(string)
-		apiVersion := object["apiVersion"].(string)
-
-		if kind != K8S_CRONJOB && apiVersion != K8S_API_VERSION_BATCH_V2_ALPHA1 {
-			continue
-		}
-
-		metadata := object["metadata"].(map[interface{}]interface{})
-		name := metadata["name"].(string)
-		namespace := metadata["namespace"].(string)
-
-		fmt.Println(fmt.Sprintf(
-			"Found %s %s and will remove it. (%s)",
-			K8S_API_VERSION_BATCH_V2_ALPHA1,
-			K8S_CRONJOB,
-			name,
-		))
-
-		kubectl.DeleteCronJob(name, namespace)
-	}
 }
 
 func version() string {

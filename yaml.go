@@ -1,8 +1,8 @@
 package main
 
 import (
-	"regexp"
 	"gopkg.in/yaml.v2"
+	"regexp"
 	"strings"
 )
 
