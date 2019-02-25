@@ -13,16 +13,27 @@ import (
 )
 
 func (client *KubeClient) GetDeployedBranchHashes(namespace string) ([]string, error) {
+	usingContext := false
+
+	if client.Context != "" {
+		client.UseContext()
+		usingContext = true
+	}
+
 	cmdName := "kubectl"
 	cmdArgs := []string{
 		"get",
 		"deployments,rc,rs,pvc,svc,cronjobs",
 		"-o",
 		"jsonpath={.items[*].metadata.labels.branch_hash}",
-		fmt.Sprintf("--server=%s", client.Server),
-		fmt.Sprintf("--token=%s", client.Token),
 		fmt.Sprintf("--namespace=%s", namespace),
 	}
+
+	if !usingContext {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--server=%s", client.Server))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--token=%s", client.Token))
+	}
+
 	cmd := exec.Command(cmdName, cmdArgs...)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
@@ -46,6 +57,13 @@ func (client *KubeClient) GetDeployedBranchHashes(namespace string) ([]string, e
 }
 
 func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace string, labelList map[string]string, dryRun bool) (string, error) {
+	usingContext := false
+
+	if client.Context != "" {
+		client.UseContext()
+		usingContext = true
+	}
+
 	cmdName := "kubectl"
 	cmdArgs := []string{
 		"delete",
@@ -53,18 +71,23 @@ func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace str
 		"-l",
 		fmt.Sprintf("branch_hash=%s", branchHash),
 		fmt.Sprintf("--namespace=%s", namespace),
-		fmt.Sprintf("--token=%s", client.Token),
-		fmt.Sprintf("--server=%s", client.Server),
+	}
+
+	if !usingContext {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--server=%s", client.Server))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--token=%s", client.Token))
 	}
 
 	for labelName, labelValue := range labelList {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("-l %s=%s", labelName, labelValue))
 	}
+
 	if dryRun {
 		cmdArgs = append(cmdArgs, "--dry-run")
 	}
 
 	cmd := exec.Command(cmdName, cmdArgs...)
+
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -81,34 +104,55 @@ func (client *KubeClient) DeleteObjectsByBranch(branchHash string, namespace str
 	return output, err
 }
 
-func (client *KubeClient) DeleteCronJob(cronJob string, namespace string) {
-	cmdName := "kubectl"
-	cmdArgs := []string{
-		"delete",
-		"cronJob",
-		fmt.Sprintf("--namespace=%s", namespace),
-	}
-	cmd := exec.Command(cmdName, cmdArgs...)
-	cmd.Output()
-}
-
 func (client *KubeClient) Version() {
-	client.runCommand("kubectl", []string{
+	usingContext := false
+
+	if client.Context != "" {
+		client.UseContext()
+		usingContext = true
+	}
+
+	cmdArgs := []string{
 		"version",
-		fmt.Sprintf("--server=%s", client.Server),
-		fmt.Sprintf("--token=%s", client.Token),
-	}, "")
+	}
+
+	if !usingContext {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--server=%s", client.Server))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--token=%s", client.Token))
+	}
+
+	client.runCommand("kubectl", cmdArgs, "")
 	fmt.Println()
 }
 
+func (client *KubeClient) UseContext() {
+	cmdArgs := []string{
+		"config",
+		"use-context",
+		client.Context,
+	}
+
+	client.runCommand("kubectl", cmdArgs, "")
+}
+
 func (client *KubeClient) Apply(definition string, namespace string, dryRun bool) {
+	usingContext := false
+
+	if client.Context != "" {
+		client.UseContext()
+		usingContext = true
+	}
+
 	cmdArgs := []string{
 		"apply",
 		"-f",
 		"-",
-		fmt.Sprintf("--server=%s", client.Server),
-		fmt.Sprintf("--token=%s", client.Token),
 		fmt.Sprintf("--namespace=%s", namespace),
+	}
+
+	if !usingContext {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--server=%s", client.Server))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--token=%s", client.Token))
 	}
 
 	if dryRun {
@@ -161,5 +205,6 @@ func (client *KubeClient) runCommand(cmdName string, cmdArgs []string, input str
 type KubeClient struct {
 	Server  string
 	Token   string
+	Context string
 	Verbose bool
 }

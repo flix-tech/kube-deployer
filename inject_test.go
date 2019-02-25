@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestInjectMetadata(t *testing.T) {
@@ -32,8 +32,7 @@ metadata:
   name: test-service
 spec:
   ports:
-    -
-      name: http
+    - name: http
       protocol: TCP
       port: 80
   selector:
@@ -41,13 +40,16 @@ spec:
 
 ---
 
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: test-deployment
   labels:
     app: test-deployment
 spec:
+  selector:
+    matchLabels:
+      app: test-deployment
   template:
     metadata:
       labels:
